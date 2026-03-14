@@ -1,0 +1,6 @@
+flask
+groq
+PyGithub
+python-dotenv
+fpdf2
+gunicorn

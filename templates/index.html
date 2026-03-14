@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>CodeGuard AI</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#05070f;--bg2:#080c18;--card:#0d1120;--card2:#111729;
+  --b1:#182040;--b2:#1e2d55;
+  --accent:#4f8bff;--purple:#8b5cf6;
+  --green:#0fba81;--yellow:#f59e0b;--red:#f43f5e;--orange:#fb923c;
+  --text:#eef2ff;--t2:#8892b0;--t3:#3d4f7c;
+  --mono:'JetBrains Mono',monospace;--sans:'Plus Jakarta Sans',sans-serif;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh;overflow-x:hidden}
+.bg-glow{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+.bg-glow::before{content:'';position:absolute;width:800px;height:800px;border-radius:50%;background:radial-gradient(circle,rgba(79,139,255,0.07) 0%,transparent 70%);top:-200px;left:-100px}
+.bg-glow::after{content:'';position:absolute;width:600px;height:600px;border-radius:50%;background:radial-gradient(circle,rgba(139,92,246,0.06) 0%,transparent 70%);bottom:-100px;right:-100px}
+.bg-grid{position:fixed;inset:0;pointer-events:none;z-index:0;background-image:linear-gradient(rgba(79,139,255,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(79,139,255,0.04) 1px,transparent 1px);background-size:50px 50px}
+nav{position:sticky;top:0;z-index:200;height:58px;display:flex;align-items:center;justify-content:space-between;padding:0 32px;background:rgba(5,7,15,0.85);backdrop-filter:blur(20px);border-bottom:1px solid var(--b1)}
+.nav-l{display:flex;align-items:center;gap:12px}
+.nav-logo{width:34px;height:34px;background:linear-gradient(135deg,var(--accent),var(--purple));border-radius:10px;display:grid;place-items:center;font-size:16px;box-shadow:0 0 24px rgba(79,139,255,0.35)}
+.nav-title{font-size:17px;font-weight:800;letter-spacing:-0.4px}
+.nav-title b{color:var(--accent)}
+.nav-pill{font-family:var(--mono);font-size:10px;padding:3px 9px;border-radius:20px;border:1px solid var(--b2);color:var(--t2);background:var(--card)}
+.live-badge{display:flex;align-items:center;gap:6px;font-size:11px;font-family:var(--mono);color:var(--green);background:rgba(15,186,129,0.08);border:1px solid rgba(15,186,129,0.22);padding:5px 11px;border-radius:20px}
+.live-dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:blink 2s infinite}
+@keyframes blink{0%,100%{box-shadow:0 0 0 0 rgba(15,186,129,0.4)}50%{box-shadow:0 0 0 5px transparent}}
+.z1{position:relative;z-index:1}
+.page{max-width:980px;margin:0 auto;padding:0 20px}
+.hero{text-align:center;padding:52px 20px 40px}
+.hero-chip{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:11px;color:var(--accent);background:rgba(79,139,255,0.08);border:1px solid rgba(79,139,255,0.22);padding:6px 14px;border-radius:20px;margin-bottom:20px}
+.hero h1{font-size:46px;font-weight:800;letter-spacing:-2px;line-height:1.1;margin-bottom:14px}
+.g1{background:linear-gradient(135deg,var(--text) 40%,var(--t2));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.g2{background:linear-gradient(135deg,var(--accent),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hero p{color:var(--t2);font-size:15px;max-width:500px;margin:0 auto 24px;line-height:1.7}
+.hero-agents{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.ha{font-size:11px;font-family:var(--mono);padding:5px 12px;border-radius:20px;border:1px solid var(--b2);color:var(--t2);background:var(--card2)}
+.input-wrap{margin-bottom:40px}
+.mode-bar{display:flex;gap:5px;margin-bottom:16px;background:var(--card2);border:1px solid var(--b1);border-radius:11px;padding:4px;width:fit-content}
+.mode-btn{padding:8px 20px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:none;background:transparent;color:var(--t3);transition:all .2s;font-family:var(--sans)}
+.mode-btn.on{background:var(--card);color:var(--text);border:1px solid var(--b2)}
+.icard{background:var(--card);border:1px solid var(--b1);border-radius:16px;padding:22px;transition:border-color .3s}
+.icard:focus-within{border-color:rgba(79,139,255,0.4)}
+.ic-head{font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.ic-dot{width:6px;height:6px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--purple))}
+textarea{width:100%;min-height:150px;background:var(--bg2);border:1px solid var(--b1);border-radius:10px;color:#a9c2ff;font-family:var(--mono);font-size:12px;line-height:1.8;padding:14px;resize:vertical;outline:none;transition:border-color .2s}
+textarea:focus{border-color:var(--accent)}
+textarea::placeholder{color:var(--t3)}
+.pr-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:4px}
+@media(max-width:600px){.pr-grid{grid-template-columns:1fr}}
+.pf label{display:block;font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
+input[type=text]{width:100%;background:var(--bg2);border:1px solid var(--b1);border-radius:10px;color:var(--text);font-family:var(--mono);font-size:13px;padding:11px 14px;outline:none;transition:border-color .2s}
+input[type=text]:focus{border-color:var(--accent)}
+input::placeholder{color:var(--t3)}
+.hint{font-size:11px;color:var(--t3);font-family:var(--mono);margin-top:5px}
+.abtn{display:inline-flex;align-items:center;gap:9px;padding:12px 26px;border:none;border-radius:10px;background:linear-gradient(135deg,var(--accent),var(--purple));color:#fff;font-family:var(--sans);font-weight:700;font-size:14px;cursor:pointer;margin-top:14px;transition:all .2s;box-shadow:0 4px 20px rgba(79,139,255,0.3)}
+.abtn:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(79,139,255,0.4)}
+.loader{display:none;padding:48px 20px;text-align:center}
+.loader.on{display:block}
+.spin{width:48px;height:48px;border:3px solid var(--b2);border-top-color:var(--accent);border-radius:50%;animation:spin .75s linear infinite;margin:0 auto 18px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.lmsg{font-family:var(--mono);font-size:13px;color:var(--t2);margin-bottom:18px}
+.atrack{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.at{font-size:11px;font-family:var(--mono);padding:5px 13px;border-radius:20px;background:var(--card2);border:1px solid var(--b1);color:var(--t3);transition:all .35s}
+.at.run{border-color:var(--accent);color:var(--accent);background:rgba(79,139,255,0.1)}
+.at.done{border-color:var(--green);color:var(--green);background:rgba(15,186,129,0.08)}
+#results{display:none}
+.rh{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;flex-wrap:wrap;gap:10px}
+.rt{font-size:22px;font-weight:800;letter-spacing:-0.5px}
+.ftag{font-family:var(--mono);font-size:11px;background:var(--card2);border:1px solid var(--b2);padding:5px 13px;border-radius:8px;color:var(--accent);max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.overall{background:var(--card);border:1px solid var(--b1);border-radius:16px;padding:22px 24px;margin-bottom:16px;display:flex;align-items:center;gap:24px}
+.ov-num{font-size:56px;font-weight:800;font-family:var(--mono);line-height:1;flex-shrink:0}
+.ov-info{flex:1}
+.ov-lbl{font-size:13px;color:var(--t2);margin-bottom:4px}
+.ov-bar-wrap{height:6px;background:var(--b1);border-radius:3px;overflow:hidden;margin-top:10px}
+.ov-bar{height:100%;border-radius:3px;transition:width 1.2s ease}
+.ov-tags{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.ov-tag{font-size:10px;font-family:var(--mono);padding:3px 9px;border-radius:6px;background:var(--card2);border:1px solid var(--b1);color:var(--t2)}
+.sgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:16px}
+@media(max-width:700px){.sgrid{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:480px){.sgrid{grid-template-columns:repeat(2,1fr)}}
+.sc{background:var(--card);border:1px solid var(--b1);border-radius:14px;padding:16px 10px;text-align:center;position:relative;overflow:hidden;transition:transform .2s}
+.sc:hover{transform:translateY(-4px)}
+.scbar{position:absolute;bottom:0;left:0;right:0;height:3px}
+.scn{font-size:28px;font-weight:800;font-family:var(--mono);line-height:1;margin-bottom:4px}
+.scl{font-size:9px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px}
+.scb{display:inline-block;font-size:9px;font-weight:700;padding:2px 7px;border-radius:6px;font-family:var(--mono)}
+.cgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px}
+@media(max-width:640px){.cgrid{grid-template-columns:1fr}}
+.cc{background:var(--card);border:1px solid var(--b1);border-radius:14px;padding:20px}
+.cct{font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:1.2px;margin-bottom:16px}
+.dgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px}
+@media(max-width:640px){.dgrid{grid-template-columns:1fr}}
+.det{background:var(--card);border:1px solid var(--b1);border-radius:14px;overflow:hidden}
+.det-h{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--b1)}
+.det-ht{display:flex;align-items:center;gap:10px;font-size:13px;font-weight:700}
+.det-ico{width:32px;height:32px;border-radius:9px;display:grid;place-items:center;font-size:15px;flex-shrink:0}
+.det-b{padding:15px 16px;display:flex;flex-direction:column;gap:12px}
+.issue-block{background:var(--bg2);border:1px solid var(--b1);border-radius:10px;overflow:hidden}
+.issue-top{display:flex;align-items:center;gap:8px;padding:10px 12px}
+.issue-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.issue-title{font-size:12px;font-weight:700;flex:1}
+.issue-sev{font-size:9px;font-weight:700;padding:2px 7px;border-radius:6px;font-family:var(--mono);flex-shrink:0}
+.issue-desc{font-size:11px;color:var(--t2);padding:0 12px 10px;line-height:1.6}
+.code-section{border-top:1px solid var(--b1)}
+.code-label{display:flex;align-items:center;gap:6px;padding:8px 12px;font-size:10px;font-weight:700;font-family:var(--mono);text-transform:uppercase;letter-spacing:1px}
+.cdot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+pre.codeblock{margin:0;padding:10px 12px;font-family:var(--mono);font-size:11px;white-space:pre-wrap;word-break:break-all;line-height:1.7;border-top:1px solid var(--b1)}
+.sep{height:1px;background:var(--b1)}
+.good-item{display:flex;align-items:flex-start;gap:8px;font-size:12px;color:var(--t2);padding:4px 0}
+.good-item::before{content:'✓';color:var(--green);font-weight:700;flex-shrink:0}
+.tip-box{padding:11px 13px;background:rgba(79,139,255,0.05);border-left:3px solid var(--accent);border-radius:0 9px 9px 0;font-size:12px;color:var(--t2);font-style:italic;line-height:1.65}
+.no-issue{color:var(--green);font-size:12px;display:flex;align-items:center;gap:7px;padding:8px 0;font-weight:600}
+.no-issue::before{content:'✓';font-size:14px}
+.tc{background:rgba(244,63,94,0.15);color:var(--red)}
+.th{background:rgba(251,146,60,0.15);color:var(--orange)}
+.tm{background:rgba(245,158,11,0.15);color:var(--yellow)}
+.tl{background:rgba(15,186,129,0.12);color:var(--green)}
+.tok{background:rgba(15,186,129,0.12);color:var(--green)}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--b2);border-radius:2px}
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+.fu{animation:fadeUp .4s ease both}
+</style>
+</head>
+<body>
+<div class="bg-glow"></div>
+<div class="bg-grid"></div>
+
+<nav class="z1">
+  <div class="nav-l">
+    <div class="nav-logo">⚡</div>
+    <div class="nav-title">Code<b>Guard</b> AI</div>
+    <div class="nav-pill">7 AGENTS</div>
+  </div>
+  <div class="live-badge"><div class="live-dot"></div>Zero Storage</div>
+</nav>
+
+<div class="z1 page">
+  <div class="hero">
+    <div class="hero-chip">⚡ Groq · Llama 3.3 70B · 7 AI Agents</div>
+    <h1><span class="g1">Intelligent Code</span><br/><span class="g2">Review System</span></h1>
+    <p>Seven specialized AI agents find bugs, security issues, and quality problems — then fix them automatically.</p>
+    <div class="hero-agents">
+      <div class="ha">📋 Code Review</div>
+      <div class="ha">🔒 Security</div>
+      <div class="ha">🐛 Bugs</div>
+      <div class="ha">📚 Docs</div>
+      <div class="ha">⚡ Performance</div>
+      <div class="ha">🚀 Deploy Check</div>
+      <div class="ha">🔧 Auto Fix</div>
+    </div>
+  </div>
+
+  <div class="input-wrap">
+    <div class="mode-bar">
+      <button class="mode-btn on" id="mb1" onclick="setMode(1)">Paste Code</button>
+      <button class="mode-btn" id="mb2" onclick="setMode(2)">GitHub PR</button>
+      <button class="mode-btn" id="mb3" onclick="setMode(3)">GitHub Repo</button>
+    </div>
+
+    <div id="mode1">
+      <div class="icard">
+        <div class="ic-head"><div class="ic-dot"></div>Your Code</div>
+        <textarea id="code-input" placeholder="Paste any code here — Python, JavaScript, Java, C++, CSS, HTML..."></textarea>
+        <button class="abtn" onclick="runCode()">▶ Analyze Code</button>
+      </div>
+    </div>
+
+    <div id="mode2" style="display:none">
+      <div class="icard">
+        <div class="ic-head"><div class="ic-dot"></div>GitHub Pull Request</div>
+        <div class="pr-grid">
+          <div class="pf">
+            <label>Repository Name</label>
+            <input type="text" id="pr-repo" placeholder="owner/repo"/>
+            <div class="hint">e.g. pallets/flask</div>
+          </div>
+          <div class="pf">
+            <label>PR Number</label>
+            <input type="text" id="pr-num" placeholder="e.g. 42"/>
+            <div class="hint">from .../pull/42</div>
+          </div>
+        </div>
+        <button class="abtn" onclick="runPR()">↗ Analyze Pull Request</button>
+      </div>
+    </div>
+
+    <div id="mode3" style="display:none">
+      <div class="icard">
+        <div class="ic-head"><div class="ic-dot"></div>GitHub Repository</div>
+        <div class="pf">
+          <label>Repository URL or Name</label>
+          <input type="text" id="repo-url" placeholder="https://github.com/owner/repo  or  owner/repo"/>
+          <div class="hint">e.g. https://github.com/pallets/flask or pallets/flask</div>
+        </div>
+        <button class="abtn" onclick="runRepo()">⬡ Analyze Repository</button>
+      </div>
+    </div>
+
+    <div class="loader" id="loader">
+      <div class="spin"></div>
+      <div class="lmsg">Running 7 AI agents...</div>
+      <div class="atrack">
+        <div class="at" id="at1">Code Review</div>
+        <div class="at" id="at2">Security</div>
+        <div class="at" id="at3">Bugs</div>
+        <div class="at" id="at4">Docs</div>
+        <div class="at" id="at5">Performance</div>
+        <div class="at" id="at6">Deploy</div>
+        <div class="at" id="at7">Auto Fix</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="results">
+    <div class="rh">
+      <div class="rt">Analysis Results</div>
+     <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+  <div class="ftag" id="r-fname"></div>
+  <div id="r-timestamp" style="font-family:var(--mono);font-size:11px;color:var(--t3);padding:5px 13px;border-radius:8px;background:var(--card2);border:1px solid var(--b1)"></div>
+</div>
+    </div>
+
+    <!-- DEPLOYMENT VERDICT -->
+    <div id="deploy-card" style="display:none;margin-bottom:16px">
+      <div id="deploy-inner" style="border-radius:14px;padding:20px 24px;display:flex;align-items:center;gap:20px;border:2px solid var(--b2);background:var(--card)">
+        <div style="font-size:44px" id="deploy-icon">⚠️</div>
+        <div style="flex:1">
+          <div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Deployment Verdict</div>
+          <div style="font-size:20px;font-weight:800;margin-bottom:4px" id="deploy-verdict">—</div>
+          <div style="font-size:13px;color:var(--t2);margin-bottom:10px" id="deploy-msg"></div>
+          <div style="display:flex;flex-direction:column;gap:5px" id="deploy-blockers"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- OVERALL SCORE -->
+    <div class="overall fu">
+      <div class="ov-num" id="r-overall">—</div>
+      <div class="ov-info">
+        <div class="ov-lbl">Overall Health Score</div>
+        <div id="r-hmsg" style="font-size:13px;font-weight:600;margin-top:2px"></div>
+        <div class="ov-bar-wrap"><div class="ov-bar" id="r-bar" style="width:0%"></div></div>
+        <div class="ov-tags" id="r-tags"></div>
+      </div>
+    </div>
+
+    <!-- 5 SCORE CARDS -->
+    <div class="sgrid">
+      <div class="sc fu"><div class="scbar" style="background:var(--accent)"></div><div class="scn" id="sn-q">—</div><div class="scl">Code Quality</div><div class="scb" id="sb-q"></div></div>
+      <div class="sc fu"><div class="scbar" style="background:var(--red)"></div><div class="scn" id="sn-s">—</div><div class="scl">Security</div><div class="scb" id="sb-s"></div></div>
+      <div class="sc fu"><div class="scbar" style="background:var(--yellow)"></div><div class="scn" id="sn-b">—</div><div class="scl">Bug Risk</div><div class="scb" id="sb-b"></div></div>
+      <div class="sc fu"><div class="scbar" style="background:var(--green)"></div><div class="scn" id="sn-d">—</div><div class="scl">Docs</div><div class="scb" id="sb-d"></div></div>
+      <div class="sc fu"><div class="scbar" style="background:var(--orange)"></div><div class="scn" id="sn-p">—</div><div class="scl">Performance</div><div class="scb" id="sb-p"></div></div>
+    </div>
+
+    <!-- CHARTS -->
+    <div class="cgrid fu">
+      <div class="cc"><div class="cct">Score Radar</div><canvas id="radarChart" height="200"></canvas></div>
+      <div class="cc"><div class="cct">Issues Per Agent</div><canvas id="barChart" height="200"></canvas></div>
+    </div>
+
+    <!-- 6 DETAIL CARDS -->
+    <div class="dgrid">
+      <div class="det fu">
+        <div class="det-h">
+          <div class="det-ht"><div class="det-ico" style="background:rgba(79,139,255,0.12)">📋</div>Code Review</div>
+          <span class="issue-sev" id="tag-q"></span>
+        </div>
+        <div class="det-b" id="body-q"></div>
+      </div>
+      <div class="det fu">
+        <div class="det-h">
+          <div class="det-ht"><div class="det-ico" style="background:rgba(244,63,94,0.12)">🔒</div>Security</div>
+          <span class="issue-sev" id="tag-s"></span>
+        </div>
+        <div class="det-b" id="body-s"></div>
+      </div>
+      <div class="det fu">
+        <div class="det-h">
+          <div class="det-ht"><div class="det-ico" style="background:rgba(245,158,11,0.12)">🐛</div>Bug Detection</div>
+          <span class="issue-sev" id="tag-b"></span>
+        </div>
+        <div class="det-b" id="body-b"></div>
+      </div>
+      <div class="det fu">
+        <div class="det-h">
+          <div class="det-ht"><div class="det-ico" style="background:rgba(15,186,129,0.12)">📚</div>Documentation</div>
+          <span class="issue-sev" id="tag-d"></span>
+        </div>
+        <div class="det-b" id="body-d"></div>
+      </div>
+      <div class="det fu" style="grid-column:1/-1">
+        <div class="det-h">
+          <div class="det-ht"><div class="det-ico" style="background:rgba(251,146,60,0.12)">⚡</div>Performance</div>
+          <span class="issue-sev" id="tag-p"></span>
+        </div>
+        <div class="det-b" id="body-p"></div>
+      </div>
+    </div>
+
+    <!-- AUTO FIX -->
+    <div id="autofix-section" style="display:none;margin-top:16px">
+      <div class="det" style="border-color:rgba(15,186,129,0.4)">
+        <div class="det-h" style="background:rgba(15,186,129,0.06)">
+          <div class="det-ht">
+            <div class="det-ico" style="background:rgba(15,186,129,0.15)">🔧</div>
+            AI Auto Fixed Code
+          </div>
+          <span class="issue-sev tl">AUTO FIXED</span>
+        </div>
+        <div class="det-b">
+          <div id="fix-summary" style="font-size:13px;color:var(--t2);font-style:italic"></div>
+          <div id="fix-changes"></div>
+          <div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+              <div style="display:flex;align-items:center;gap:6px">
+                <div style="width:8px;height:8px;border-radius:50%;background:var(--green)"></div>
+                <span style="font-size:10px;font-weight:700;color:var(--green);font-family:var(--mono);text-transform:uppercase;letter-spacing:1px">Fixed Code — Ready to Use</span>
+              </div>
+              <button onclick="copyFixed()" style="font-size:11px;padding:4px 12px;border-radius:6px;background:rgba(15,186,129,0.1);border:1px solid rgba(15,186,129,0.3);color:var(--green);cursor:pointer;font-family:var(--mono)">Copy Code</button>
+            </div>
+            <pre id="fix-code" style="background:#04120a;border:1px solid rgba(15,186,129,0.25);border-left:3px solid var(--green);border-radius:0 10px 10px 0;padding:14px;font-family:var(--mono);font-size:12px;color:#6ee7b7;white-space:pre-wrap;word-break:break-all;line-height:1.8;max-height:400px;overflow-y:auto"></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="height:60px"></div>
+  </div>
+</div>
+
+<script>
+var rInst = null;
+var bInst = null;
+var agTimer = null;
+
+function setMode(n) {
+  document.getElementById('mode1').style.display = n === 1 ? 'block' : 'none';
+  document.getElementById('mode2').style.display = n === 2 ? 'block' : 'none';
+  document.getElementById('mode3').style.display = n === 3 ? 'block' : 'none';
+  document.getElementById('mb1').classList.toggle('on', n === 1);
+  document.getElementById('mb2').classList.toggle('on', n === 2);
+  document.getElementById('mb3').classList.toggle('on', n === 3);
+}
+
+function showLoader() {
+  document.getElementById('loader').classList.add('on');
+  document.getElementById('results').style.display = 'none';
+  var ids = ['at1','at2','at3','at4','at5','at6','at7'];
+  ids.forEach(function(id) { document.getElementById(id).className = 'at'; });
+  var i = 0;
+  agTimer = setInterval(function() {
+    if (i > 0) document.getElementById(ids[i-1]).className = 'at done';
+    if (i < ids.length) { document.getElementById(ids[i]).className = 'at run'; i++; }
+  }, 1400);
+}
+
+function hideLoader() {
+  clearInterval(agTimer);
+  ['at1','at2','at3','at4','at5','at6','at7'].forEach(function(id) {
+    document.getElementById(id).className = 'at done';
+  });
+  setTimeout(function() { document.getElementById('loader').classList.remove('on'); }, 300);
+}
+
+function scoreColor(n) {
+  if (n >= 7) return 'var(--green)';
+  if (n >= 4) return 'var(--yellow)';
+  return 'var(--red)';
+}
+function scoreLabel(n) {
+  if (n >= 7) return 'GOOD';
+  if (n >= 4) return 'FAIR';
+  return 'POOR';
+}
+function sevClass(s) {
+  if (!s) return 'tok';
+  var v = s.toUpperCase();
+  if (v === 'CRITICAL') return 'tc';
+  if (v === 'HIGH') return 'th';
+  if (v === 'MEDIUM') return 'tm';
+  return 'tl';
+}
+function dotColor(s) {
+  if (!s) return 'var(--green)';
+  var v = s.toUpperCase();
+  if (v === 'CRITICAL') return 'var(--red)';
+  if (v === 'HIGH') return 'var(--orange)';
+  if (v === 'MEDIUM') return 'var(--yellow)';
+  return 'var(--green)';
+}
+function esc(t) {
+  return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function buildIssueBlock(it) {
+  var title = typeof it === 'string' ? it : (it.title || 'Issue found');
+  var desc  = (typeof it === 'object' && it.description) ? it.description : '';
+  var sev   = (typeof it === 'object' && it.severity)    ? it.severity    : '';
+  var fix   = (typeof it === 'object' && it.fix)         ? it.fix         : '';
+  var cmt   = (typeof it === 'object' && it.comment)     ? it.comment     : '';
+  var html  = '<div class="issue-block">';
+  html += '<div class="issue-top">';
+  html += '<div class="issue-dot" style="background:' + dotColor(sev) + '"></div>';
+  html += '<div class="issue-title">' + esc(title) + '</div>';
+  if (sev) html += '<span class="issue-sev ' + sevClass(sev) + '">' + esc(sev) + '</span>';
+  html += '</div>';
+  if (desc) html += '<div class="issue-desc">' + esc(desc) + '</div>';
+  if (fix) {
+    html += '<div class="code-section">';
+    html += '<div class="code-label"><div class="cdot" style="background:var(--red)"></div><span style="color:var(--red)">Wrong Code</span></div>';
+    html += '<pre class="codeblock" style="background:#140508;color:#fca5a5">' + esc(desc) + '</pre>';
+    html += '<div class="code-label"><span style="color:var(--t3);font-size:16px">↓</span></div>';
+    html += '<div class="code-label"><div class="cdot" style="background:var(--green)"></div><span style="color:var(--green)">Corrected Code</span></div>';
+    html += '<pre class="codeblock" style="background:#04120a;color:#6ee7b7">' + esc(fix) + '</pre>';
+    html += '</div>';
+  }
+  if (cmt) {
+    html += '<div class="code-section">';
+    html += '<div class="code-label"><div class="cdot" style="background:var(--accent)"></div><span style="color:var(--accent)">Add This Comment</span></div>';
+    html += '<pre class="codeblock" style="background:#030b18;color:#93c5fd">' + esc(cmt) + '</pre>';
+    html += '</div>';
+  }
+  html += '</div>';
+  return html;
+}
+
+function buildBody(items, good, tip) {
+  var html = '';
+  if (!items || items.length === 0) {
+    html += '<div class="no-issue">No issues found</div>';
+  } else {
+    items.forEach(function(it) { html += buildIssueBlock(it); });
+  }
+  if (good && good.length > 0) {
+    html += '<div class="sep"></div>';
+    good.forEach(function(g) { html += '<div class="good-item">' + esc(g) + '</div>'; });
+  }
+  if (tip) html += '<div class="tip-box">' + esc(tip) + '</div>';
+  return html;
+}
+
+function setTag(id, text, cls) {
+  var el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = text;
+  el.className = 'issue-sev ' + cls;
+}
+
+function setScore(nId, bId, score, badge) {
+  var nel = document.getElementById(nId);
+  if (nel) { nel.textContent = score + '/10'; nel.style.color = scoreColor(score); }
+  var bel = document.getElementById(bId);
+  if (bel) { bel.textContent = badge; bel.className = 'scb ' + sevClass(badge); }
+}
+
+function renderCharts(cr, sec, bug, doc, perf) {
+  var scores = [cr.score||0, sec.score||0, bug.score||0, doc.score||0, perf.score||0];
+  var counts = [(cr.issues||[]).length,(sec.vulnerabilities||[]).length,(bug.bugs||[]).length,(doc.missing||[]).length,(perf.issues||[]).length];
+  Chart.defaults.color = '#3d4f7c';
+  Chart.defaults.borderColor = '#182040';
+  if (rInst) rInst.destroy();
+  rInst = new Chart(document.getElementById('radarChart'), {
+    type: 'radar',
+    data: {
+      labels: ['Quality','Security','Bugs','Docs','Perf'],
+      datasets: [{data:scores,backgroundColor:'rgba(79,139,255,0.08)',borderColor:'#4f8bff',pointBackgroundColor:'#4f8bff',pointRadius:4,borderWidth:2}]
+    },
+    options: {responsive:true,plugins:{legend:{display:false}},scales:{r:{min:0,max:10,ticks:{stepSize:2,color:'#2a3a5c',backdropColor:'transparent',font:{size:10}},grid:{color:'#182040'},pointLabels:{color:'#8892b0',font:{size:12,family:"'Plus Jakarta Sans',sans-serif",weight:'700'}}}}}
+  });
+  if (bInst) bInst.destroy();
+  bInst = new Chart(document.getElementById('barChart'), {
+    type: 'bar',
+    data: {
+      labels: ['Quality','Security','Bugs','Docs','Perf'],
+      datasets: [{data:counts,backgroundColor:['rgba(79,139,255,0.7)','rgba(244,63,94,0.7)','rgba(245,158,11,0.7)','rgba(15,186,129,0.7)','rgba(251,146,60,0.7)'],borderRadius:7,borderSkipped:false}]
+    },
+    options: {responsive:true,plugins:{legend:{display:false}},scales:{x:{grid:{color:'#182040'},ticks:{color:'#8892b0',font:{size:11}}},y:{grid:{color:'#182040'},ticks:{color:'#8892b0',stepSize:1,font:{size:11}},beginAtZero:true}}}
+  });
+}
+
+function displayResult(data) {
+  var cr   = data.code_review   || {};
+  var sec  = data.security      || {};
+  var bug  = data.bug_detection || {};
+  var doc  = data.docs          || {};
+  var perf = data.performance   || {};
+  var dep  = data.deploy        || {};
+  var fix  = data.auto_fix      || {};
+
+  document.getElementById('results').style.display = 'block';
+  document.getElementById('r-fname').textContent = data.filename || 'your code';
+document.getElementById('r-timestamp').textContent = data.timestamp ? 'Analyzed: ' + data.timestamp : '';
+
+  // Overall score
+  var overall = data.overall || 0;
+  var ovEl = document.getElementById('r-overall');
+  ovEl.textContent = overall;
+  ovEl.style.color = scoreColor(overall);
+  document.getElementById('r-bar').style.width = (overall * 10) + '%';
+  document.getElementById('r-bar').style.background = scoreColor(overall);
+  var msg = overall >= 7 ? 'Excellent — production ready' : overall >= 4 ? 'Fair — some improvements needed' : 'Needs attention — critical issues found';
+  var hmsg = document.getElementById('r-hmsg');
+  hmsg.textContent = msg;
+  hmsg.style.color = scoreColor(overall);
+  document.getElementById('r-tags').innerHTML =
+    '<span class="ov-tag">Quality: '+(cr.score||0)+'/10</span>' +
+    '<span class="ov-tag">Security: '+(sec.score||0)+'/10</span>' +
+    '<span class="ov-tag">Bugs: '+(bug.score||0)+'/10</span>' +
+    '<span class="ov-tag">Docs: '+(doc.score||0)+'/10</span>' +
+    '<span class="ov-tag">Perf: '+(perf.score||0)+'/10</span>';
+
+  // Score cards
+  setScore('sn-q','sb-q', cr.score||0,  scoreLabel(cr.score||0));
+  setScore('sn-s','sb-s', sec.score||0, sec.severity||scoreLabel(sec.score||0));
+  setScore('sn-b','sb-b', bug.score||0, bug.risk||scoreLabel(bug.score||0));
+  setScore('sn-d','sb-d', doc.score||0, scoreLabel(doc.score||0));
+  setScore('sn-p','sb-p', perf.score||0,perf.rating||scoreLabel(perf.score||0));
+
+  // Detail tags
+  setTag('tag-q', scoreLabel(cr.score||0),  sevClass(scoreLabel(cr.score||0)));
+  setTag('tag-s', sec.severity||scoreLabel(sec.score||0), sevClass(sec.severity||scoreLabel(sec.score||0)));
+  setTag('tag-b', bug.risk||scoreLabel(bug.score||0), sevClass(bug.risk||scoreLabel(bug.score||0)));
+  setTag('tag-d', scoreLabel(doc.score||0), sevClass(scoreLabel(doc.score||0)));
+  setTag('tag-p', perf.rating||scoreLabel(perf.score||0), sevClass(perf.rating||scoreLabel(perf.score||0)));
+
+  // Detail bodies
+  document.getElementById('body-q').innerHTML = buildBody(cr.issues,  cr.good,  cr.tip);
+  document.getElementById('body-s').innerHTML = buildBody(sec.vulnerabilities, null, sec.tip);
+  document.getElementById('body-b').innerHTML = buildBody(bug.bugs,   null,     bug.tip);
+  document.getElementById('body-d').innerHTML = buildBody(doc.missing, doc.good, doc.tip);
+  document.getElementById('body-p').innerHTML = buildBody(perf.issues, null,    perf.tip);
+
+  // Charts
+  renderCharts(cr, sec, bug, doc, perf);
+
+  // Deployment verdict
+  if (dep.verdict) {
+    document.getElementById('deploy-card').style.display = 'block';
+    var safe = dep.safe_to_deploy;
+    var risk = (dep.risk_level||'').toUpperCase();
+    var color = safe ? 'var(--green)' : (risk==='CRITICAL'||risk==='HIGH') ? 'var(--red)' : 'var(--yellow)';
+    var icon  = safe ? '✅' : (risk==='CRITICAL'||risk==='HIGH') ? '🚫' : '⚠️';
+    var inner = document.getElementById('deploy-inner');
+    inner.style.borderColor = color;
+    inner.style.background = safe ? 'rgba(15,186,129,0.05)' : (risk==='CRITICAL'||risk==='HIGH') ? 'rgba(244,63,94,0.05)' : 'rgba(245,158,11,0.05)';
+    document.getElementById('deploy-icon').textContent = icon;
+    document.getElementById('deploy-verdict').textContent = dep.verdict;
+    document.getElementById('deploy-verdict').style.color = color;
+    document.getElementById('deploy-msg').textContent = dep.message || '';
+    var blHtml = '';
+    (dep.blockers||[]).forEach(function(b) { blHtml += '<div style="display:flex;align-items:center;gap:7px;font-size:12px;color:var(--red)"><span>✗</span>' + esc(b) + '</div>'; });
+    (dep.warnings||[]).forEach(function(w) { blHtml += '<div style="display:flex;align-items:center;gap:7px;font-size:12px;color:var(--yellow)"><span>⚠</span>' + esc(w) + '</div>'; });
+    document.getElementById('deploy-blockers').innerHTML = blHtml;
+  }
+
+  // Auto fix
+  if (fix.fixed_code) {
+    document.getElementById('autofix-section').style.display = 'block';
+    document.getElementById('fix-summary').textContent = fix.summary || '';
+    var chHtml = '';
+    (fix.changes||[]).forEach(function(c) { chHtml += '<div class="good-item">' + esc(c) + '</div>'; });
+    document.getElementById('fix-changes').innerHTML = chHtml;
+    document.getElementById('fix-code').textContent = fix.fixed_code;
+  }
+
+  document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function copyFixed() {
+  var code = document.getElementById('fix-code').textContent;
+  navigator.clipboard.writeText(code).then(function() { alert('Fixed code copied!'); });
+}
+
+function runCode() {
+  var code = document.getElementById('code-input').value.trim();
+  if (!code) { alert('Please paste some code first!'); return; }
+  showLoader();
+  fetch('/analyze', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ code: code, filename: 'pasted_code.py' })
+  })
+  .then(function(res) { return res.json(); })
+  .then(function(data) { hideLoader(); displayResult(data); })
+  .catch(function(e) { hideLoader(); alert('Error: ' + e.message); });
+}
+
+function runPR() {
+  var repo = document.getElementById('pr-repo').value.trim();
+  var num  = document.getElementById('pr-num').value.trim();
+  if (!repo || !num) { alert('Please fill in both fields!'); return; }
+  showLoader();
+  fetch('/analyze-pr', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ repo: repo, pr_number: parseInt(num) })
+  })
+  .then(function(res) { return res.json(); })
+  .then(function(data) {
+    hideLoader();
+    if (data.results && data.results.length > 0) displayResult(data.results[0]);
+    else alert('No supported files found in this PR.');
+  })
+  .catch(function(e) { hideLoader(); alert('Error: ' + e.message); });
+}
+
+function runRepo() {
+  var url = document.getElementById('repo-url').value.trim();
+  if (!url) { alert('Please enter a GitHub repo URL!'); return; }
+  showLoader();
+  fetch('/analyze-repo', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ url: url })
+  })
+  .then(function(res) { return res.json(); })
+  .then(function(data) {
+    hideLoader();
+    if (data.results && data.results.length > 0) displayResult(data.results[0]);
+    else alert('No supported code files found. Make sure it is a public repository.');
+  })
+  .catch(function(e) { hideLoader(); alert('Error: ' + e.message); });
+}
+</script>
+</body>
+</html>
