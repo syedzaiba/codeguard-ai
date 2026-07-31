@@ -29,7 +29,7 @@ Built at a hackathon. Powered by **Groq + Llama 3.3 70B**. Zero data stored.
 | Agent | What it does |
 |-------|-------------|
 | 📋 **Code Review** | Style, structure, naming conventions, best practices |
-| 🔒 **Security** | SQL injection, XSS, hardcoded secrets, OWASP Top 10 |
+| 🔒 **High Security** | SQL injection, XSS, hardcoded secrets, OWASP Top 10 |
 | 🐛 **Bug Detection** | Null dereferences, off-by-one errors, logic bugs |
 | 📚 **Documentation** | Missing docstrings, unclear comments, doc suggestions |
 | ⚡ **Performance** | O(n²) loops, memory leaks, redundant DB calls |
